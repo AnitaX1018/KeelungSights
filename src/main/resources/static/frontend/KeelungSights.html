@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>基隆景點瀏覽器</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.0/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.0/css/bootstrap.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+
+<body>
+<div class="container mt-5 text-center">
+    <div class="btn-group" id="zoneButtons">
+        <button class="btn btn-secondary" data-zone="中山">中山區</button>
+        <button class="btn btn-secondary" data-zone="信義">信義區</button>
+        <button class="btn btn-secondary" data-zone="仁愛">仁愛區</button>
+        <button class="btn btn-secondary" data-zone="中正">中正區</button>
+        <button class="btn btn-secondary" data-zone="安樂">安樂區</button>
+        <button class="btn btn-secondary" data-zone="七堵">七堵區</button>
+        <button class="btn btn-secondary" data-zone="暖暖">暖暖區</button>
+    </div>
+    <!--card-->
+    <div id="result" class="row mt-3"><div class="text-center">點擊上方區域顯示景點<br><img src="https://image1.gamme.com.tw/news2/2017/49/24/q6CVnZ2ZkKCcqA.jpg" width="50%"></div></div>
+</div>
+
+<script>
+    $(document).ready(function () {
+
+        $('#zoneButtons button').click(function () {
+            var zone = $(this).data('zone');
+            console.log(zone);
+            loadZoneData(zone);
+        });
+
+        // 調用API Load指定zone資訊
+        function loadZoneData(zone) {
+            $.ajax({
+                url: 'http://localhost:8080/SightAPI?zone=' + encodeURIComponent(zone),
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    displaySights(data);//拿到data執行製作card
+                },
+                error: function () {
+                    alert('沒有資訊');
+                }
+            });
+        }
+
+        //each card
+        function displaySights(data) {
+            var resultDiv = $('#result');//抓id=result的地方
+            resultDiv.empty();//把原本resultdiv清空
+
+            //遍歷data裡每一筆都做card
+            $.each(data, function (index, sight) {
+                var card = $('<div class="col-md-4 mb-3"></div>');
+
+                var cardBody = $('<div class="card"></div>');
+                var cardBodyInner = $('<div class="card-body"></div>');
+                var title = $('<h5 class="card-title" style="font-weight: bolder">' + sight.sightName + '</h5>');
+                var zone = $('<p class="card-text">' + sight.zone + '</p>');
+                var category = $('<p class="card-text">' + sight.category + '</p>');
+                var addressBtn = $('<button class="btn btn-secondary" style="margin-right: 10px">地址</button>');
+                var collapseDiv = $('<div class="collapse" id="collapse-' + index + '"></div>');
+                var collapseContent = $('<div class="card card-body"></div>');
+                var image = $('<img src="' + sight.photoURL + '" class="card-img-top">');
+                var description = $('<p>' + sight.description + '</p>');
+
+                // collapse(詳細資訊按鈕)
+                var collapseButton = $('<button type="button" class="btn btn-secondary" ' +
+                    'data-bs-toggle="collapse" data-bs-target="#collapse-' + index + '" aria-expanded="false" ' +
+                    'aria-controls="collapse-' + index + '">詳細資訊</button>');
+
+                //合體
+                cardBodyInner.append(title, zone, category, addressBtn, collapseButton);//card
+
+                collapseContent.append(image, description);
+                collapseDiv.append(collapseContent);
+
+                cardBody.append(cardBodyInner, collapseDiv);
+                card.append(cardBody);
+
+                resultDiv.append(card);//一個一個靶card加進resultdiv
+
+                //跳轉地址
+                addressBtn.click(function () {
+                    var name = sight.sightName;
+                    window.open('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(name));
+                });
+            });
+        }
+    });
+</script>
+</body>
+
+</html>
